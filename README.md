@@ -1,33 +1,78 @@
-# Smart Video Speed Controller / 网页视频倍速记忆大师
+# Smart Video Speed Controller
 
-📺 A modern Chrome extension to automatically remember and apply video playback speeds on a per-page basis. \
-告别全局统一倍速时代！这是一款现代化的 Chrome 视频倍速控制器，能够为每个网页独立记忆您设置的播放速度。
+> 📺 A modern Chrome extension that **automatically remembers and applies video playback speeds** on a per-page basis.
 
-## ✨ 核心特性 (Features)
+🌐 [中文文档 (Chinese README)](./README_CN.md)
 
-- **🎥 单页记忆 (Per-Page Memory)**: 每个页面的视频倍速独立保存，刷新或下次打开时自动恢复。
-- **🌍 全局默认倍速 (Global Default)**: 当页面无独立记忆时，使用您设定的专属全局默认值（例如默认 1.25x），不再局限于原本的 1.0x。
-- **⌨️ 快捷键支持 (Shortcuts)**: 默认支持 `Alt + .` 加速、`Alt + ,` 减速、`Alt + 0` 重置，全键盘操控更顺畅。
-- **🔄 双向同步 (Bidirectional Sync)**: 如果您使用网页（如 YouTube/B站）自带的播放器快捷键或按钮调整了速度，插件会自动感知并记住最新的速度！
-- **👻 Shadow DOM 穿透**: 完美支持 Vimeo 等将视频隐藏在 Shadow DOM 节点内部的复杂播放器。
-- **💅 玻璃拟态 UI (Glassmorphism)**: 极具现代感的全新暗黑毛玻璃界面，自带微动效。
+---
 
-## 📦 本地安装 (Installation)
+## ✨ Features
 
-1. 在 Chrome 地址栏输入并打开：`chrome://extensions/`
-2. 打开右上角的 **开发者模式 (Developer mode)**
-3. 点击 **加载已解压的扩展程序 (Load unpacked)**
-4. 选择本项目所在的文件夹。
+- **🎥 Per-Page Memory** — Each page's video speed is saved independently. Refresh or revisit later and the speed is automatically restored.
+- **🌍 Global Default Speed** — Set your own default speed (e.g. 1.25x) for pages without an individual setting. No more stuck at 1.0x.
+- **⌨️ Keyboard Shortcuts** — `Alt + .` to speed up, `Alt + ,` to slow down, `Alt + 0` to reset. Fully customizable via `chrome://extensions/shortcuts`.
+- **🔄 Bidirectional Sync** — Changed speed via YouTube/Bilibili's native controls? The extension picks it up and remembers it automatically.
+- **👻 Shadow DOM Support** — Works with complex players (Vimeo, etc.) that hide `<video>` elements inside Shadow DOM.
+- **💅 Glassmorphism UI** — A sleek dark-themed interface with frosted-glass cards and smooth micro-animations.
+- **💾 Smart Storage** — LRU eviction keeps your storage clean. Entries at default speed are auto-deleted. Max 500 entries.
 
-## 💡 匹配逻辑 (Matching Logic)
+## 📸 Screenshots
 
-当前版本根据完整 URL（去除了 `#hash` 参数）作为唯一键进行匹配：
-- `https://example.com/course/1` 和 `/course/2` 被视为两个不同页面，独立记忆。
-- `https://example.com/watch?v=1` 和 `?v=2` 独立记忆。
-- 页面内的 Hash (`#`) 变化不会切分记录（以防单面应用不断产生新数据）。
+_Coming soon._
 
-## 🚀 后续开发计划 (TODOs)
+## 📦 Installation
 
-- 支持在 Popup 控制面板中切换“按域名记忆 (Domain)”与“按确切页面记忆 (URL)”两种模式。
-- 进一步优化 Storage 容量管理（LRU 清理策略增强）。
-- Firefox 兼容性适配。
+### From Source (Developer Mode)
+
+1. Clone or download this repository.
+2. Open `chrome://extensions/` in Chrome.
+3. Enable **Developer mode** (top-right toggle).
+4. Click **Load unpacked** and select this project folder.
+
+### From Chrome Web Store
+
+_Coming soon._
+
+## 🔧 How It Works
+
+### URL Matching
+
+Each page is identified by its full URL **without the `#hash`** fragment:
+
+| URL | Key |
+|---|---|
+| `https://example.com/course/1` | `https://example.com/course/1` |
+| `https://example.com/course/2` | `https://example.com/course/2` |
+| `https://example.com/watch?v=abc#t=60` | `https://example.com/watch?v=abc` |
+
+Hash changes within the same page do **not** create a new entry.
+
+### Architecture
+
+| File | Role |
+|---|---|
+| `manifest.json` | Extension config (MV3) |
+| `content.js` | Injected into every page — controls video speed, listens for URL/DOM changes |
+| `popup.html/css/js` | Popup dashboard UI |
+| `background.js` | Service worker — handles badge updates and keyboard shortcut commands |
+
+## ⌨️ Default Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Alt + .` | Speed up (+0.1x) |
+| `Alt + ,` | Slow down (−0.1x) |
+| `Alt + 0` | Reset to default |
+
+Customize anytime at `chrome://extensions/shortcuts`.
+
+## 🛣️ Roadmap
+
+- [ ] Domain-level memory mode (remember speed per domain instead of per URL)
+- [ ] Firefox / Edge compatibility
+- [ ] Chrome Web Store publication
+- [ ] Export / import settings
+
+## 📄 License
+
+MIT
