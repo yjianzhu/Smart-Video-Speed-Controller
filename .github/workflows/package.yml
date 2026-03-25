@@ -22,8 +22,8 @@ jobs:
 
       - name: Zip extension files
         run: |
-          # Package all necessary files into a single zip file for uploading to the Chrome Web Store
-          zip -r extension.zip . -x "*.git*" "*.github*" "*.DS_Store" "node_modules/*" "*.md"
+          cd src
+          zip -r ../extension.zip *
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

@@ -27,7 +27,7 @@ _Coming soon._
 1. Clone or download this repository.
 2. Open `chrome://extensions/` in Chrome.
 3. Enable **Developer mode** (top-right toggle).
-4. Click **Load unpacked** and select this project folder.
+4. Click **Load unpacked** and select the **`src`** folder inside this project.
 
 ### From Chrome Web Store
 
@@ -49,12 +49,25 @@ Hash changes within the same page do **not** create a new entry.
 
 ### Architecture
 
+```
+├── README.md              # English docs
+├── README_CN.md           # Chinese docs
+├── .github/workflows/     # CI/CD
+└── src/                   # Extension source (load this in Chrome)
+    ├── manifest.json
+    ├── background.js
+    ├── content.js
+    ├── popup.html
+    ├── popup.css
+    └── popup.js
+```
+
 | File | Role |
 |---|---|
-| `manifest.json` | Extension config (MV3) |
-| `content.js` | Injected into every page — controls video speed, listens for URL/DOM changes |
-| `popup.html/css/js` | Popup dashboard UI |
-| `background.js` | Service worker — handles badge updates and keyboard shortcut commands |
+| `src/manifest.json` | Extension config (MV3) |
+| `src/content.js` | Injected into every page — controls video speed, listens for URL/DOM changes |
+| `src/popup.html/css/js` | Popup dashboard UI |
+| `src/background.js` | Service worker — handles badge updates and keyboard shortcut commands |
 
 ## ⌨️ Default Shortcuts
 

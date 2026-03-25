@@ -27,7 +27,7 @@ _即将推出。_
 1. 克隆或下载本仓库。
 2. 在 Chrome 地址栏输入 `chrome://extensions/` 并打开。
 3. 开启右上角的 **开发者模式**。
-4. 点击 **加载已解压的扩展程序**，选择本项目所在的文件夹。
+4. 点击 **加载已解压的扩展程序**，选择本项目中的 **`src`** 文件夹。
 
 ### Chrome Web Store
 
@@ -49,12 +49,25 @@ _即将上架。_
 
 ### 文件架构
 
+```
+├── README.md              # 英文文档
+├── README_CN.md           # 中文文档
+├── .github/workflows/     # CI/CD 流水线
+└── src/                   # 扩展源码（在 Chrome 中加载此文件夹）
+    ├── manifest.json
+    ├── background.js
+    ├── content.js
+    ├── popup.html
+    ├── popup.css
+    └── popup.js
+```
+
 | 文件 | 用途 |
 |---|---|
-| `manifest.json` | 扩展配置（Manifest V3） |
-| `content.js` | 注入到每个页面——控制视频速率，监听 URL 和 DOM 变化 |
-| `popup.html/css/js` | 弹窗面板 UI |
-| `background.js` | Service Worker——处理图标徽章更新和快捷键指令 |
+| `src/manifest.json` | 扩展配置（Manifest V3） |
+| `src/content.js` | 注入到每个页面——控制视频速率，监听 URL 和 DOM 变化 |
+| `src/popup.html/css/js` | 弹窗面板 UI |
+| `src/background.js` | Service Worker——处理图标徽章更新和快捷键指令 |
 
 ## ⌨️ 默认快捷键
 
