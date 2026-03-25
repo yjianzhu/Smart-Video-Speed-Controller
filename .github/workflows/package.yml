@@ -32,10 +32,14 @@ jobs:
           path: extension.zip
           retention-days: 7
 
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Create / Update Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: latest
+          name: Latest Extension Build
+          body: "Auto-generated release from the latest code in the default branch. Download the `extension.zip` below."
           files: extension.zip
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -29,6 +29,15 @@ _Coming soon._
 3. Enable **Developer mode** (top-right toggle).
 4. Click **Load unpacked** and select the **`src`** folder inside this project.
 
+### For General Users (Install via ZIP)
+
+1. Go to the [Releases page](../../releases/latest).
+2. Download the `extension.zip` file.
+3. **Extract** the zip file into an empty folder on your computer.
+4. Open `chrome://extensions/` in Chrome.
+5. Enable **Developer mode** (top-right toggle).
+6. Click **Load unpacked** and select the folder you just extracted.
+
 ### From Chrome Web Store
 
 _Coming soon._
