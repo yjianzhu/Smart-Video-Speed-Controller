@@ -10,7 +10,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Per-Page Video Speed",
+    "default_title": "Smart Video Speed Controller",
     "default_popup": "popup.html"
   },
   "commands": {
