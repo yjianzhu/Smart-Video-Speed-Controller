@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Video Speed Controller</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- ─── Header ──────────────────────────────────────── -->
+      <header class="header">
+        <h1 class="title">Video Speed Controller</h1>
+        <button id="gearBtn" class="icon-btn" title="设置">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </header>
+
+      <!-- ─── Main View ───────────────────────────────────── -->
+      <div id="mainView">
+        <!-- Unsupported notice -->
+        <div id="unsupported" class="glass-card notice hidden">
+          <p>当前页面暂不支持控制。</p>
+        </div>
+
+        <!-- Speed Control Card -->
+        <section id="panel" class="glass-card hidden">
+          <div class="card-header">
+            <span class="card-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 6v6l4 2"/></svg>
+            </span>
+            <span class="card-title">Current Page Speed</span>
+            <strong id="rateLabel" class="rate-display">1.00x</strong>
+          </div>
+
+          <input id="rateRange" type="range" min="0.25" max="4" step="0.05" value="1" />
+          <div class="range-labels">
+            <span>0.25x</span>
+            <span>4.00x</span>
+          </div>
+
+          <div class="presets" id="presets">
+            <button data-rate="0.75">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              <span>0.75x</span>
+            </button>
+            <button data-rate="1">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              <span>1x</span>
+            </button>
+            <button data-rate="1.25">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 19V5l7 7zM6 19V5l7 7z"/></svg>
+              <span>1.25x</span>
+            </button>
+            <button data-rate="1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 19V5l7 7zM6 19V5l7 7z"/></svg>
+              <span>1.5x</span>
+            </button>
+            <button data-rate="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 19V5l7 7zM6 19V5l7 7z"/></svg>
+              <span>2x</span>
+            </button>
+          </div>
+
+          <div class="action-row">
+            <button id="minusBtn" class="action-btn outline">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span>-0.1</span>
+            </button>
+            <button id="plusBtn" class="action-btn outline">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span>+0.1</span>
+            </button>
+            <button id="resetBtn" class="action-btn danger">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              <span>Reset</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Detected Video Card -->
+        <section id="videoCard" class="glass-card hidden">
+          <div class="card-header">
+            <span class="card-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>
+            </span>
+            <span class="card-title">Detected Video: <span id="videoCount">0</span></span>
+          </div>
+          <code id="pageKey" class="url-display">-</code>
+        </section>
+      </div>
+
+      <!-- ─── Settings View ───────────────────────────────── -->
+      <div id="settingsView" class="hidden">
+        <!-- Global Default Speed -->
+        <div class="glass-card">
+          <div class="card-header">
+            <button id="backBtn" class="icon-btn" title="返回">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            </button>
+            <span class="card-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </span>
+            <span class="card-title">Settings</span>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <span>Global Default Speed</span>
+            </div>
+            <div class="default-rate-row">
+              <input id="defaultRateInput" type="number" min="0.25" max="4" step="0.05" value="1" />
+              <button id="saveDefaultBtn" class="save-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                Save
+              </button>
+            </div>
+            <p class="hint">Pages without individual settings will use this default speed.</p>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="settings-section">
+            <div class="settings-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M6 16h.01M10 16h.01M14 16h.01M18 16h.01"/></svg>
+              <span>Shortcuts (Default)</span>
+            </div>
+
+            <div class="shortcut-list">
+              <div class="shortcut-item">
+                <div class="keys"><kbd>Alt</kbd> + <kbd>.</kbd></div>
+                <span>Speed Up</span>
+              </div>
+              <div class="shortcut-item">
+                <div class="keys"><kbd>Alt</kbd> + <kbd>,</kbd></div>
+                <span>Slow Down</span>
+              </div>
+              <div class="shortcut-item">
+                <div class="keys"><kbd>Alt</kbd> + <kbd>0</kbd></div>
+                <span>Reset</span>
+              </div>
+            </div>
+
+            <a id="customizeShortcuts" class="customize-link" href="#">Customize Shortcuts →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
