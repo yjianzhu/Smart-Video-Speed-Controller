@@ -23,16 +23,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Extract Version
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version src/manifest.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
+
       - name: Zip extension files
         run: |
           cd src
-          zip -r ../extension.zip *
+          zip -r ../smart-video-speed-controller-v${{ env.VERSION }}.zip *
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: smart-video-speed-controller
-          path: extension.zip
+          name: smart-video-speed-controller-v${{ env.VERSION }}
+          path: smart-video-speed-controller-v${{ env.VERSION }}.zip
           retention-days: 7
 
       - name: Create / Update Release
@@ -40,9 +47,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
-          name: Latest Extension Build
-          body: "Auto-generated release from the latest code in the default branch. Download the `extension.zip` below."
-          files: extension.zip
+          name: Latest Extension Build (v${{ env.VERSION }})
+          body: "Auto-generated release from the latest code in the default branch. Download the packaged `.zip` extension below."
+          files: smart-video-speed-controller-v${{ env.VERSION }}.zip
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
