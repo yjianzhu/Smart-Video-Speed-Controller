@@ -11,7 +11,12 @@ let currentPageKey = currentUrl;
 let desiredRate = HARDCODED_DEFAULT;
 let globalDefaultRate = HARDCODED_DEFAULT;
 let syncTimer = null;
+let urlPollTimer = null;
 const observedVideos = new WeakSet();
+
+function contextValid() {
+  try { return !!chrome.runtime?.id; } catch { return false; }
+}
 
 // ─── Utility ─────────────────────────────────────────────────────────
 
@@ -102,6 +107,7 @@ function normalizePageKey(rawUrl) {
 // ─── Storage ─────────────────────────────────────────────────────────
 
 async function getGlobalSettings() {
+  if (!contextValid()) return {};
   const data = await chrome.storage.local.get(SETTINGS_KEY);
   return data[SETTINGS_KEY] || {};
 }
@@ -114,6 +120,7 @@ async function getGlobalDefaultRate() {
 
 async function setGlobalDefaultRate(rate) {
   const safeRate = clampRate(rate);
+  if (!contextValid()) return safeRate;
   const settings = await getGlobalSettings();
   settings.defaultRate = safeRate;
   await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
@@ -122,6 +129,7 @@ async function setGlobalDefaultRate(rate) {
 }
 
 async function getRatesMap() {
+  if (!contextValid()) return {};
   const data = await chrome.storage.local.get(STORAGE_KEY);
   return data[STORAGE_KEY] || {};
 }
@@ -143,6 +151,7 @@ async function getRateForCurrentPage() {
  */
 async function setRateForCurrentPage(rate) {
   const safeRate = clampRate(rate);
+  if (!contextValid()) return safeRate;
   const rates = await getRatesMap();
 
   if (Math.abs(safeRate - globalDefaultRate) < 0.001) {
@@ -160,6 +169,7 @@ async function setRateForCurrentPage(rate) {
 }
 
 async function resetRateForCurrentPage() {
+  if (!contextValid()) return globalDefaultRate;
   const rates = await getRatesMap();
   delete rates[currentPageKey];
   await chrome.storage.local.set({ [STORAGE_KEY]: rates });
@@ -306,6 +316,7 @@ function scheduleApply() {
 let lastKnownHref = location.href;
 
 async function refreshForCurrentUrl() {
+  if (!contextValid()) { clearInterval(urlPollTimer); return; }
   currentUrl = location.href;
   currentPageKey = normalizePageKey(currentUrl);
   desiredRate = await getRateForCurrentPage();
@@ -318,7 +329,7 @@ function watchUrlChanges() {
   window.addEventListener('popstate', () => refreshForCurrentUrl());
 
   // Poll for SPA-style navigations (pushState / replaceState)
-  setInterval(() => {
+  urlPollTimer = setInterval(() => {
     if (location.href !== lastKnownHref) {
       lastKnownHref = location.href;
       refreshForCurrentUrl();
@@ -419,7 +430,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== 'local') return;
+  if (areaName !== 'local' || !contextValid()) return;
 
   if (changes[SETTINGS_KEY]) {
     const newSettings = changes[SETTINGS_KEY].newValue || {};
