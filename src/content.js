@@ -7,12 +7,11 @@ const RATE_STEP = 0.05;
 const MAX_STORED_PAGES = 500;
 
 let currentUrl = location.href;
-let currentPageKey = normalizePageKey(currentUrl);
+let currentPageKey = currentUrl;
 let desiredRate = HARDCODED_DEFAULT;
 let globalDefaultRate = HARDCODED_DEFAULT;
 let syncTimer = null;
 const observedVideos = new WeakSet();
-const internalRateChange = new WeakSet();
 
 // ─── Utility ─────────────────────────────────────────────────────────
 
@@ -23,10 +22,77 @@ function clampRate(rate) {
   return Math.round(Math.min(MAX_RATE, Math.max(MIN_RATE, stepped)) * 100) / 100;
 }
 
+/**
+ * Domain-aware URL normalization for stable page-key generation.
+ * - Known video sites: only keep whitelisted meaningful params.
+ * - Other sites: strip common tracking params (utm_*, spm_*, etc.).
+ */
+const VIDEO_DOMAIN_PARAMS = {
+  'youtube.com':       ['v', 'list', 'index'],
+  'youtu.be':          [],
+  'bilibili.com':      ['p'],
+  'vimeo.com':         [],
+  'dailymotion.com':   [],
+  'twitch.tv':         [],
+  'youku.com':         [],
+  'iqiyi.com':         [],
+  'nicovideo.jp':      [],
+  'tiktok.com':        [],
+  'netflix.com':       [],
+  'disneyplus.com':    [],
+  'hulu.com':          [],
+  'crunchyroll.com':   [],
+  'ted.com':           [],
+  'coursera.org':      [],
+  'udemy.com':         [],
+};
+
+const TRACKING_PARAM_PREFIXES = ['utm_', 'spm_', 'from_spm', 'share_'];
+const TRACKING_PARAMS = new Set([
+  'fbclid', 'gclid', 'dclid', 'msclkid',
+  'vd_source', 'share_source', 'share_medium', 'share_token',
+  'bbid', 'seid', 'unique_k', 'refer_flag', 'refer_from',
+  'rt', 'ts', 'tt_from', 'is_copy_url', 'is_from_webapp',
+  'tracking_id',
+]);
+
 function normalizePageKey(rawUrl) {
   try {
     const url = new URL(rawUrl);
     url.hash = '';
+
+    // Strip "www." from the URL so that
+    // www.youtube.com and youtube.com produce the same page key
+    url.hostname = url.hostname.replace(/^www\./, '');
+    const hostname = url.hostname;
+
+    // Check if this is a known video domain
+    const matchedDomain = Object.keys(VIDEO_DOMAIN_PARAMS).find(
+      (d) => hostname === d || hostname.endsWith('.' + d)
+    );
+
+    if (matchedDomain) {
+      // Normalize trailing slash on pathname
+      url.pathname = url.pathname.replace(/\/+$/, '') || '/';
+      // Whitelist: only keep allowed params
+      const allowed = new Set(VIDEO_DOMAIN_PARAMS[matchedDomain]);
+      const cleaned = new URLSearchParams();
+      for (const [key, value] of url.searchParams) {
+        if (allowed.has(key)) cleaned.set(key, value);
+      }
+      url.search = cleaned.toString();
+    } else {
+      // Blacklist: strip known tracking params
+      const cleaned = new URLSearchParams();
+      for (const [key, value] of url.searchParams) {
+        const isTracking =
+          TRACKING_PARAMS.has(key) ||
+          TRACKING_PARAM_PREFIXES.some((p) => key.startsWith(p));
+        if (!isTracking) cleaned.set(key, value);
+      }
+      url.search = cleaned.toString();
+    }
+
     return url.toString();
   } catch {
     return rawUrl;
@@ -171,6 +237,10 @@ function showOSD(text) {
 }
 
 // ─── Video rate control ──────────────────────────────────────────────
+// Extension is the sole authority on playback speed.
+// No bidirectional sync with YouTube/site player — this avoids all
+// race conditions where YouTube resets speed back to 1.0.
+// A periodic enforcement loop re-applies our rate every 500ms.
 
 function getAllVideos() {
   const videos = Array.from(document.querySelectorAll('video'));
@@ -195,9 +265,7 @@ function applyRate(video) {
   if (!(video instanceof HTMLMediaElement)) return;
   const safeRate = clampRate(desiredRate);
   if (Math.abs(video.playbackRate - safeRate) < 0.001) return;
-  internalRateChange.add(video);
   video.playbackRate = safeRate;
-  queueMicrotask(() => internalRateChange.delete(video));
 }
 
 function bindVideo(video) {
@@ -208,21 +276,12 @@ function bindVideo(video) {
 
   observedVideos.add(video);
 
+  // Re-apply our rate whenever the video reloads or starts playing
   const sync = () => applyRate(video);
-
   video.addEventListener('loadedmetadata', sync, { passive: true });
   video.addEventListener('play', sync, { passive: true });
   video.addEventListener('emptied', sync, { passive: true });
-
-  // Bidirectional sync
-  video.addEventListener('ratechange', () => {
-    if (internalRateChange.has(video)) return;
-    const externalRate = clampRate(video.playbackRate);
-    if (Math.abs(externalRate - desiredRate) > 0.001) {
-      desiredRate = externalRate;
-      setRateForCurrentPage(externalRate);
-    }
-  });
+  video.addEventListener('ratechange', sync, { passive: true });
 
   applyRate(video);
 }
@@ -238,7 +297,13 @@ function scheduleApply() {
   syncTimer = setTimeout(applyRateToAllVideos, 80);
 }
 
-// ─── URL change detection (History API interception) ─────────────────
+
+// ─── URL change detection (polling-based) ────────────────────────────
+// Content scripts run in an isolated world, so monkey-patching
+// history.pushState / replaceState does NOT intercept calls from
+// the page's main world.  Use polling + popstate instead.
+
+let lastKnownHref = location.href;
 
 async function refreshForCurrentUrl() {
   currentUrl = location.href;
@@ -249,19 +314,16 @@ async function refreshForCurrentUrl() {
 }
 
 function watchUrlChanges() {
-  const origPushState = history.pushState.bind(history);
-  history.pushState = function (...args) {
-    origPushState(...args);
-    refreshForCurrentUrl();
-  };
-
-  const origReplaceState = history.replaceState.bind(history);
-  history.replaceState = function (...args) {
-    origReplaceState(...args);
-    refreshForCurrentUrl();
-  };
-
+  // popstate still fires in the isolated world for back/forward nav
   window.addEventListener('popstate', () => refreshForCurrentUrl());
+
+  // Poll for SPA-style navigations (pushState / replaceState)
+  setInterval(() => {
+    if (location.href !== lastKnownHref) {
+      lastKnownHref = location.href;
+      refreshForCurrentUrl();
+    }
+  }, 300);
 }
 
 // ─── DOM Observer (only react to video-related mutations) ─────────────
@@ -362,6 +424,15 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (changes[SETTINGS_KEY]) {
     const newSettings = changes[SETTINGS_KEY].newValue || {};
     globalDefaultRate = clampRate(newSettings.defaultRate ?? HARDCODED_DEFAULT);
+    if (!changes[STORAGE_KEY]) {
+      getRateForCurrentPage()
+        .then((rate) => {
+          desiredRate = rate;
+          applyRateToAllVideos();
+          updateBadge(desiredRate);
+        })
+        .catch(() => {});
+    }
   }
 
   if (changes[STORAGE_KEY]) {
@@ -378,6 +449,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 // ─── Init ────────────────────────────────────────────────────────────
 
 (async function init() {
+  currentPageKey = normalizePageKey(currentUrl);
   globalDefaultRate = await getGlobalDefaultRate();
   desiredRate = await getRateForCurrentPage();
   applyRateToAllVideos();

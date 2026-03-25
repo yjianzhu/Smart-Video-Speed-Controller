@@ -3,7 +3,6 @@
 const rateRange = document.getElementById('rateRange');
 const rateLabel = document.getElementById('rateLabel');
 const panel = document.getElementById('panel');
-const unsupported = document.getElementById('unsupported');
 const videoCard = document.getElementById('videoCard');
 const videoCount = document.getElementById('videoCount');
 const pageKey = document.getElementById('pageKey');
@@ -62,7 +61,7 @@ async function sendToActiveTab(message) {
   // Race against a timeout to prevent slow popup opening
   return Promise.race([
     chrome.tabs.sendMessage(tab.id, message),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 500))
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
   ]);
 }
 
@@ -72,22 +71,31 @@ async function loadState() {
   // Always load global default (works even on unsupported pages)
   const data = await chrome.storage.local.get('globalSettings');
   const settings = data.globalSettings || {};
-  defaultRateInput.value = String(settings.defaultRate ?? 1);
+  const globalDefault = clampRate(settings.defaultRate ?? 1);
+  defaultRateInput.value = String(globalDefault);
+
+  // Always show speed control panel
+  panel.classList.remove('hidden');
 
   try {
     const state = await sendToActiveTab({ type: 'GET_STATE' });
     if (!state?.ok) throw new Error(state?.error || 'Unsupported page');
 
-    panel.classList.remove('hidden');
     videoCard.classList.remove('hidden');
-    unsupported.classList.add('hidden');
     renderRate(state.rate);
     videoCount.textContent = String(state.videoCount ?? 0);
-    pageKey.textContent = state.pageKey || '-';
-  } catch (error) {
-    panel.classList.add('hidden');
+    // Show shortened path, full cleaned URL on hover
+    try {
+      const u = new URL(state.pageKey);
+      pageKey.textContent = u.pathname + u.search;
+      pageKey.title = state.pageKey;
+    } catch {
+      pageKey.textContent = state.pageKey || '-';
+    }
+  } catch {
+    // Unsupported page — still show speed panel with global default
     videoCard.classList.add('hidden');
-    unsupported.classList.remove('hidden');
+    renderRate(globalDefault);
   }
 }
 
@@ -96,10 +104,14 @@ async function loadState() {
 async function applyRate(rate) {
   const safeRate = clampRate(rate);
   renderRate(safeRate);
-  const result = await sendToActiveTab({ type: 'SET_RATE', rate: safeRate });
-  if (result?.ok) {
-    renderRate(result.rate);
-    videoCount.textContent = String(result.videoCount ?? 0);
+  try {
+    const result = await sendToActiveTab({ type: 'SET_RATE', rate: safeRate });
+    if (result?.ok) {
+      renderRate(result.rate);
+      videoCount.textContent = String(result.videoCount ?? 0);
+    }
+  } catch {
+    // Unsupported page — UI already updated, silently ignore
   }
 }
 
@@ -122,10 +134,17 @@ plusBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', async () => {
-  const result = await sendToActiveTab({ type: 'RESET_RATE' });
-  if (result?.ok) {
-    renderRate(result.rate);
-    videoCount.textContent = String(result.videoCount ?? 0);
+  try {
+    const result = await sendToActiveTab({ type: 'RESET_RATE' });
+    if (result?.ok) {
+      renderRate(result.rate);
+      videoCount.textContent = String(result.videoCount ?? 0);
+    }
+  } catch {
+    // Unsupported page — reset to global default
+    const data = await chrome.storage.local.get('globalSettings');
+    const settings = data.globalSettings || {};
+    renderRate(clampRate(settings.defaultRate ?? 1));
   }
 });
 

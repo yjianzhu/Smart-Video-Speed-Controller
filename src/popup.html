@@ -21,10 +21,7 @@
 
       <!-- ─── Main View ───────────────────────────────────── -->
       <div id="mainView">
-        <!-- Unsupported notice -->
-        <div id="unsupported" class="glass-card notice hidden">
-          <p>当前页面暂不支持控制。</p>
-        </div>
+
 
         <!-- Speed Control Card -->
         <section id="panel" class="glass-card hidden">
@@ -81,16 +78,13 @@
           </div>
         </section>
 
-        <!-- Detected Video Card -->
-        <section id="videoCard" class="glass-card hidden">
-          <div class="card-header">
-            <span class="card-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>
-            </span>
-            <span class="card-title">Detected Video: <span id="videoCount">0</span></span>
-          </div>
-          <code id="pageKey" class="url-display">-</code>
-        </section>
+        <!-- Detected Video Status Bar -->
+        <div id="videoCard" class="video-status-bar hidden">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span class="video-count"><span id="videoCount">0</span> video detected</span>
+          <span class="video-separator">·</span>
+          <span id="pageKey" class="video-url" title="">-</span>
+        </div>
       </div>
 
       <!-- ─── Settings View ───────────────────────────────── -->

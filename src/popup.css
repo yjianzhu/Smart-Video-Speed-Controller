@@ -285,18 +285,40 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: var(--danger-hover);
 }
 
-/* ─── Video Card ─────────────────────────────────────────────────── */
+/* ─── Video Status Bar ───────────────────────────────────────────── */
 
-.url-display {
-  display: block;
-  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+.video-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
   font-size: 11px;
   color: var(--text-muted);
-  word-break: break-all;
-  line-height: 1.5;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 6px 8px;
-  border-radius: 6px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.video-status-bar svg {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.video-count {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.video-separator {
+  opacity: 0.35;
+}
+
+.video-url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+  font-size: 10px;
+  opacity: 0.6;
 }
 
 /* ─── Global Default Speed ───────────────────────────────────────── */
