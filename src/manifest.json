@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Smart Video Speed Controller",
   "short_name": "Video Speed",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Automatically remember and apply different video playback speeds for every unique URL or website. Supports global defaults & shortcuts.",
   "permissions": ["storage"],
   "host_permissions": ["<all_urls>"],
