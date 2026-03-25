@@ -42,14 +42,25 @@ jobs:
           path: smart-video-speed-controller-v${{ env.VERSION }}.zip
           retention-days: 7
 
-      - name: Create / Update Release
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      - name: Rolling Latest Release (Pre-release)
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
           name: Latest Extension Build (v${{ env.VERSION }})
-          body: "Auto-generated release from the latest code in the default branch. Download the packaged `.zip` extension below."
+          body: "Auto-generated rolling release from the latest code in the default branch. Download the packaged `.zip` extension below."
           files: smart-video-speed-controller-v${{ env.VERSION }}.zip
           prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Formal Tag Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          body: "Official release for version ${{ github.ref_name }}."
+          files: smart-video-speed-controller-v${{ env.VERSION }}.zip
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
